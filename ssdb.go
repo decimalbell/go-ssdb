@@ -1,11 +1,14 @@
 package ssdb
 
 import (
+	"encoding/binary"
+
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
 type DB struct {
-	ldb *leveldb.DB
+	ldb       *leveldb.DB
+	byteOrder binary.ByteOrder
 }
 
 func Open(path string, opts *Options) (*DB, error) {
@@ -14,7 +17,8 @@ func Open(path string, opts *Options) (*DB, error) {
 		return nil, err
 	}
 	return &DB{
-		ldb: ldb,
+		ldb:       ldb,
+		byteOrder: binary.LittleEndian, // TODO
 	}, nil
 }
 

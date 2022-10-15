@@ -25,5 +25,9 @@ func TestHGet(t *testing.T) {
 			assert.Nil(t, err)
 			assert.Equal(t, value, val)
 		}
+
+		len, err := db.HLen(ctx, key)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 10, len)
 	}
 }

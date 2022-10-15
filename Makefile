@@ -5,6 +5,7 @@ build:
 
 test:
 	go test ./...
+	git restore testdata
 
 cover:
 	go test -coverprofile=coverage.out
