@@ -4,7 +4,7 @@ build:
 	go build
 
 test:
-	go test
+	go test ./...
 
 cover:
 	go test -coverprofile=coverage.out

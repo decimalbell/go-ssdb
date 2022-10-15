@@ -9,9 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGet(t *testing.T) {
-	dir := "../testdata/var/data"
+const (
+	dir = "../testdata/var/data"
+)
 
+func TestGet(t *testing.T) {
 	db, err := ssdb.Open(dir, nil)
 	assert.Nil(t, err)
 	defer db.Close()
