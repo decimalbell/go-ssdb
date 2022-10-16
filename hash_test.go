@@ -139,9 +139,9 @@ func TestHKeys(t *testing.T) {
 
 	key := []byte("key")
 	fields := make([][]byte, 0, 32)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 100; i++ {
 		field := []byte(strconv.Itoa(i))
-		value := []byte(strconv.Itoa(i))
+		value := []byte(strconv.Itoa(i * 2))
 		err := db.HSet(ctx, key, field, value)
 		assert.Nil(t, err)
 
@@ -150,4 +150,28 @@ func TestHKeys(t *testing.T) {
 	actualFields, err := db.HKeys(ctx, key)
 	assert.Nil(t, err)
 	assert.ElementsMatch(t, fields, actualFields)
+}
+
+func TestHVals(t *testing.T) {
+	dir, _ := os.MkdirTemp("", "ssdb")
+	defer os.RemoveAll(dir)
+
+	db, _ := Open(dir, nil)
+	defer db.Close()
+
+	ctx := context.TODO()
+
+	key := []byte("key")
+	values := make([][]byte, 0, 32)
+	for i := 0; i < 100; i++ {
+		field := []byte(strconv.Itoa(i))
+		value := []byte(strconv.Itoa(i * 2))
+		err := db.HSet(ctx, key, field, value)
+		assert.Nil(t, err)
+
+		values = append(values, value)
+	}
+	actualValues, err := db.HVals(ctx, key)
+	assert.Nil(t, err)
+	assert.ElementsMatch(t, values, actualValues)
 }

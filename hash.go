@@ -122,3 +122,19 @@ func (db *DB) HKeys(ctx context.Context, key []byte) ([][]byte, error) {
 	}
 	return fields, nil
 }
+
+func (db *DB) HVals(ctx context.Context, key []byte) ([][]byte, error) {
+	prefix := encodeHashKeyPrefix(key)
+	iter := db.ldb.NewIterator(util.BytesPrefix(prefix), nil)
+	values := make([][]byte, 0, 32)
+	for iter.Next() {
+		value := make([]byte, len(iter.Value()))
+		copy(value, iter.Value())
+		values = append(values, value)
+	}
+	iter.Release()
+	if err := iter.Error(); err != nil {
+		return nil, err
+	}
+	return values, nil
+}
