@@ -175,3 +175,27 @@ func TestHVals(t *testing.T) {
 	assert.Nil(t, err)
 	assert.ElementsMatch(t, values, actualValues)
 }
+
+func TestGetAll(t *testing.T) {
+	dir, _ := os.MkdirTemp("", "ssdb")
+	defer os.RemoveAll(dir)
+
+	db, _ := Open(dir, nil)
+	defer db.Close()
+
+	ctx := context.TODO()
+
+	key := []byte("key")
+	all := make([][]byte, 0, 32)
+	for i := 0; i < 100; i++ {
+		field := []byte(strconv.Itoa(i))
+		value := []byte(strconv.Itoa(i * 2))
+		err := db.HSet(ctx, key, field, value)
+		assert.Nil(t, err)
+
+		all = append(all, field, value)
+	}
+	actualAll, err := db.HGetAll(ctx, key)
+	assert.Nil(t, err)
+	assert.ElementsMatch(t, all, actualAll)
+}

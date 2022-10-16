@@ -138,3 +138,23 @@ func (db *DB) HVals(ctx context.Context, key []byte) ([][]byte, error) {
 	}
 	return values, nil
 }
+
+func (db *DB) HGetAll(ctx context.Context, key []byte) ([][]byte, error) {
+	prefix := encodeHashKeyPrefix(key)
+	iter := db.ldb.NewIterator(util.BytesPrefix(prefix), nil)
+	all := make([][]byte, 0, 64)
+	for iter.Next() {
+		field := make([]byte, len(iter.Key())-len(prefix))
+		copy(field, iter.Key()[len(prefix):])
+
+		value := make([]byte, len(iter.Value()))
+		copy(value, iter.Value())
+
+		all = append(all, field, value)
+	}
+	iter.Release()
+	if err := iter.Error(); err != nil {
+		return nil, err
+	}
+	return all, nil
+}
