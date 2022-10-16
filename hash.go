@@ -158,3 +158,11 @@ func (db *DB) HGetAll(ctx context.Context, key []byte) ([][]byte, error) {
 	}
 	return all, nil
 }
+
+func (db *DB) HStrLen(ctx context.Context, key []byte, field []byte) (int, error) {
+	value, err := db.get(encodeHashKey(key, field))
+	if err != nil {
+		return 0, err
+	}
+	return len(value), nil
+}

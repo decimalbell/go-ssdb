@@ -176,7 +176,7 @@ func TestHVals(t *testing.T) {
 	assert.ElementsMatch(t, values, actualValues)
 }
 
-func TestGetAll(t *testing.T) {
+func TestHGetAll(t *testing.T) {
 	dir, _ := os.MkdirTemp("", "ssdb")
 	defer os.RemoveAll(dir)
 
@@ -198,4 +198,33 @@ func TestGetAll(t *testing.T) {
 	actualAll, err := db.HGetAll(ctx, key)
 	assert.Nil(t, err)
 	assert.ElementsMatch(t, all, actualAll)
+}
+
+func TestHStrLen(t *testing.T) {
+	dir, _ := os.MkdirTemp("", "ssdb")
+	defer os.RemoveAll(dir)
+
+	db, _ := Open(dir, nil)
+	defer db.Close()
+
+	ctx := context.TODO()
+
+	key := []byte("key")
+	field := []byte("field")
+	value := []byte("value")
+
+	{
+		value, err := db.HStrLen(ctx, key, field)
+		assert.Nil(t, err)
+		assert.Equal(t, 0, value)
+	}
+
+	{
+		err := db.HSet(ctx, key, field, value)
+		assert.Nil(t, err)
+
+		strLen, err := db.HStrLen(ctx, key, field)
+		assert.Nil(t, err)
+		assert.Equal(t, len(value), strLen)
+	}
 }

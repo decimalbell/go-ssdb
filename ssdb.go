@@ -34,6 +34,17 @@ func (db *DB) exists(ldbKey []byte) (bool, error) {
 	return true, nil
 }
 
+func (db *DB) get(ldbKey []byte) ([]byte, error) {
+	value, err := db.ldb.Get(ldbKey, nil)
+	if errors.Is(err, leveldb.ErrNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return value, nil
+}
+
 func (db *DB) Close() error {
 	if db.ldb != nil {
 		return db.ldb.Close()
