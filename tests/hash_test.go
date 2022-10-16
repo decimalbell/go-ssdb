@@ -25,7 +25,18 @@ func TestHGet(t *testing.T) {
 			assert.Nil(t, err)
 			assert.Equal(t, value, val)
 		}
+	}
+}
 
+func TestHLen(t *testing.T) {
+	db, err := ssdb.Open(dir, nil)
+	assert.Nil(t, err)
+	defer db.Close()
+
+	ctx := context.TODO()
+
+	for i := 0; i < 100; i++ {
+		key := []byte(fmt.Sprintf("hash%d", i))
 		len, err := db.HLen(ctx, key)
 		assert.Nil(t, err)
 		assert.EqualValues(t, 10, len)
