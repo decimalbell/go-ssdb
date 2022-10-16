@@ -2,6 +2,7 @@ package ssdb
 
 import (
 	"encoding/binary"
+	"errors"
 
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -20,6 +21,17 @@ func Open(path string, opts *Options) (*DB, error) {
 		ldb:       ldb,
 		byteOrder: binary.LittleEndian, // TODO
 	}, nil
+}
+
+func (db *DB) exists(ldbKey []byte) (bool, error) {
+	_, err := db.ldb.Get(ldbKey, nil)
+	if errors.Is(err, leveldb.ErrNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (db *DB) Close() error {
