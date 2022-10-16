@@ -37,19 +37,19 @@ func (db *DB) HSet(ctx context.Context, key []byte, field []byte, value []byte) 
 	}
 
 	if !exists {
-		return db.incrHLen(encodeHashLenKey(key))
+		return db.incrbyHLen(encodeHashLenKey(key), 1)
 	}
 
 	return nil
 }
 
-func (db *DB) incrHLen(ldbKey []byte) error {
+func (db *DB) incrbyHLen(ldbKey []byte, increment int64) error {
 	len, err := db.hlen(ldbKey)
 	if err != nil {
 		return err
 	}
 	value := make([]byte, 8)
-	db.byteOrder.PutUint64(value, uint64(len+1))
+	db.byteOrder.PutUint64(value, uint64(len+increment))
 	return db.ldb.Put(ldbKey, value, nil)
 }
 
@@ -73,4 +73,26 @@ func (db *DB) hlen(ldbKey []byte) (int64, error) {
 		return 0, nil // TODO
 	}
 	return int64(db.byteOrder.Uint64(value)), nil
+}
+
+func (db *DB) HDel(ctx context.Context, key []byte, field []byte) (bool, error) {
+	ldbKey := encodeHashKey(key, field)
+	exists, err := db.exists(ldbKey)
+	if err != nil {
+		return false, err
+	}
+	if !exists {
+		return false, nil
+	}
+
+	if err := db.ldb.Delete(ldbKey, nil); err != nil {
+		return false, err
+	}
+
+	err = db.incrbyHLen(encodeHashLenKey(key), -1)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

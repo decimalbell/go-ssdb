@@ -90,3 +90,40 @@ func TestHLen(t *testing.T) {
 		assert.EqualValues(t, 0, len)
 	}
 }
+
+func TestHDel(t *testing.T) {
+	dir, _ := os.MkdirTemp("", "ssdb")
+	defer os.RemoveAll(dir)
+
+	db, _ := Open(dir, nil)
+	defer db.Close()
+
+	ctx := context.TODO()
+
+	key := []byte("key")
+	field := []byte("field")
+	value := []byte("value")
+
+	{
+		ok, err := db.HDel(ctx, key, field)
+		assert.Nil(t, err)
+		assert.EqualValues(t, false, ok)
+	}
+
+	{
+		err := db.HSet(ctx, key, field, value)
+		assert.Nil(t, err)
+
+		len, err := db.HLen(ctx, key)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 1, len)
+
+		ok, err := db.HDel(ctx, key, field)
+		assert.Nil(t, err)
+		assert.EqualValues(t, true, ok)
+
+		len, err = db.HLen(ctx, key)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 0, len)
+	}
+}
