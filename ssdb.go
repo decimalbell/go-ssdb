@@ -3,6 +3,7 @@ package ssdb
 import (
 	"encoding/binary"
 	"errors"
+	"strconv"
 
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -43,6 +44,31 @@ func (db *DB) get(ldbKey []byte) ([]byte, error) {
 		return nil, err
 	}
 	return value, nil
+}
+
+func (db *DB) incrby(ldbKey []byte, increment int64) (int64, error) {
+	val, err := db.get(ldbKey)
+	if err != nil {
+		return 0, err
+	}
+
+	var newVal int64
+	if val == nil {
+		newVal = increment
+	} else {
+		newVal, err = strconv.ParseInt(string(val), 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		newVal += increment
+	}
+
+	err = db.ldb.Put(ldbKey, []byte(strconv.FormatInt(newVal, 10)), nil)
+	if err != nil {
+		return 0, err
+	}
+
+	return newVal, nil
 }
 
 func (db *DB) Close() error {

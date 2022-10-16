@@ -22,3 +22,7 @@ func (db *DB) Get(ctx context.Context, key []byte) ([]byte, error) {
 func (db *DB) Del(ctx context.Context, key []byte) error {
 	return db.ldb.Delete(encodeStringKey(key), nil)
 }
+
+func (db *DB) Incrby(ctx context.Context, key []byte, increment int64) (int64, error) {
+	return db.incrby(encodeStringKey(key), increment)
+}
