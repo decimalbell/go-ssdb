@@ -16,7 +16,7 @@ func (db *DB) Set(ctx context.Context, key []byte, value []byte) error {
 }
 
 func (db *DB) Get(ctx context.Context, key []byte) ([]byte, error) {
-	return db.ldb.Get(encodeStringKey(key), nil)
+	return db.get(encodeStringKey(key))
 }
 
 func (db *DB) Del(ctx context.Context, key []byte) error {

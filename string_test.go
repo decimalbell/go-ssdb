@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/syndtr/goleveldb/leveldb"
 )
 
 func TestEncodeStringKey(t *testing.T) {
@@ -27,7 +26,7 @@ func TestGet(t *testing.T) {
 
 	{
 		val, err := db.Get(ctx, key)
-		assert.Equal(t, err, leveldb.ErrNotFound)
+		assert.Nil(t, err)
 		assert.Nil(t, val)
 	}
 
@@ -70,9 +69,8 @@ func TestDel(t *testing.T) {
 		assert.Nil(t, err)
 
 		val, err = db.Get(ctx, key)
-		assert.Equal(t, leveldb.ErrNotFound, err)
-		// assert.Nil(t, val)
-		assert.Equal(t, []byte(""), val)
+		assert.Nil(t, err)
+		assert.Nil(t, val)
 	}
 }
 
