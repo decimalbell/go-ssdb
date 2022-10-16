@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/syndtr/goleveldb/leveldb"
 )
 
 func TestHGet(t *testing.T) {
@@ -21,11 +20,21 @@ func TestHGet(t *testing.T) {
 
 	key := []byte("key")
 	field := []byte("field")
+	value := []byte("value")
 
 	{
-		val, err := db.HGet(ctx, key, field)
-		assert.Equal(t, err, leveldb.ErrNotFound)
-		assert.Nil(t, val)
+		actualValue, err := db.HGet(ctx, key, field)
+		assert.Nil(t, err)
+		assert.Nil(t, actualValue)
+	}
+
+	{
+		err := db.HSet(ctx, key, field, value)
+		assert.Nil(t, err)
+
+		actualValue, err := db.HGet(ctx, key, field)
+		assert.Nil(t, err)
+		assert.Equal(t, value, actualValue)
 	}
 }
 

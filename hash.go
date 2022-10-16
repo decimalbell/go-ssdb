@@ -64,7 +64,7 @@ func (db *DB) incrbyHLen(ldbKey []byte, increment int64) error {
 }
 
 func (db *DB) HGet(ctx context.Context, key []byte, field []byte) ([]byte, error) {
-	return db.ldb.Get(encodeHashKey(key, field), nil)
+	return db.get(encodeHashKey(key, field))
 }
 
 func (db *DB) HLen(ctx context.Context, key []byte) (int64, error) {
