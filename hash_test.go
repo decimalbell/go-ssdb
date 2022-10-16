@@ -127,3 +127,27 @@ func TestHDel(t *testing.T) {
 		assert.EqualValues(t, 0, len)
 	}
 }
+
+func TestHKeys(t *testing.T) {
+	dir, _ := os.MkdirTemp("", "ssdb")
+	defer os.RemoveAll(dir)
+
+	db, _ := Open(dir, nil)
+	defer db.Close()
+
+	ctx := context.TODO()
+
+	key := []byte("key")
+	fields := make([][]byte, 0, 32)
+	for i := 0; i < 3; i++ {
+		field := []byte(strconv.Itoa(i))
+		value := []byte(strconv.Itoa(i))
+		err := db.HSet(ctx, key, field, value)
+		assert.Nil(t, err)
+
+		fields = append(fields, field)
+	}
+	actualFields, err := db.HKeys(ctx, key)
+	assert.Nil(t, err)
+	assert.ElementsMatch(t, fields, actualFields)
+}

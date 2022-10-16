@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 func encodeHashKey(key []byte, field []byte) []byte {
@@ -14,6 +15,15 @@ func encodeHashKey(key []byte, field []byte) []byte {
 	buf = append(buf, key...)
 	buf = append(buf, '=')
 	buf = append(buf, field...)
+	return buf
+}
+
+func encodeHashKeyPrefix(key []byte) []byte {
+	buf := make([]byte, 0, 1+1+len(key)+1)
+	buf = append(buf, 'h')
+	buf = append(buf, byte(len(key)))
+	buf = append(buf, key...)
+	buf = append(buf, '=')
 	return buf
 }
 
@@ -95,4 +105,20 @@ func (db *DB) HDel(ctx context.Context, key []byte, field []byte) (bool, error) 
 	}
 
 	return true, nil
+}
+
+func (db *DB) HKeys(ctx context.Context, key []byte) ([][]byte, error) {
+	prefix := encodeHashKeyPrefix(key)
+	iter := db.ldb.NewIterator(util.BytesPrefix(prefix), nil)
+	fields := make([][]byte, 0, 32)
+	for iter.Next() {
+		field := make([]byte, len(iter.Key())-len(prefix))
+		copy(field, iter.Key()[len(prefix):])
+		fields = append(fields, field)
+	}
+	iter.Release()
+	if err := iter.Error(); err != nil {
+		return nil, err
+	}
+	return fields, nil
 }
