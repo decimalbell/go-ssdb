@@ -53,6 +53,27 @@ func (db *DB) HSet(ctx context.Context, key []byte, field []byte, value []byte) 
 	return nil
 }
 
+func (db *DB) HSetNX(ctx context.Context, key []byte, field []byte, value []byte) (bool, error) {
+	ldbKey := encodeHashKey(key, field)
+	exists, err := db.exists(ldbKey)
+	if err != nil {
+		return false, err
+	}
+	if exists {
+		return false, nil
+	}
+
+	if err := db.ldb.Put(ldbKey, value, nil); err != nil {
+		return false, err
+	}
+
+	if err := db.incrbyHLen(encodeHashLenKey(key), 1); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (db *DB) incrbyHLen(ldbKey []byte, increment int64) error {
 	len, err := db.hlen(ldbKey)
 	if err != nil {

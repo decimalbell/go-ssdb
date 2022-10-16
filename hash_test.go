@@ -82,6 +82,38 @@ func TestHSet(t *testing.T) {
 	}
 }
 
+func TestHSetNX(t *testing.T) {
+	dir, _ := os.MkdirTemp("", "ssdb")
+	defer os.RemoveAll(dir)
+
+	db, _ := Open(dir, nil)
+	defer db.Close()
+
+	ctx := context.TODO()
+
+	key := []byte("key")
+	field := []byte("field")
+	value := []byte("value")
+
+	{
+		ok, err := db.HSetNX(ctx, key, field, value)
+		assert.Nil(t, err)
+		assert.Equal(t, true, ok)
+
+		len, err := db.HLen(ctx, key)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 1, len)
+
+		ok, err = db.HSetNX(ctx, key, field, value)
+		assert.Nil(t, err)
+		assert.Equal(t, false, ok)
+
+		len, err = db.HLen(ctx, key)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 1, len)
+	}
+}
+
 func TestHLen(t *testing.T) {
 	dir, _ := os.MkdirTemp("", "ssdb")
 	defer os.RemoveAll(dir)
