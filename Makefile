@@ -9,4 +9,5 @@ test:
 
 cover:
 	go test -coverprofile=coverage.out
+	git restore testdata
 	go tool cover -html=coverage.out
