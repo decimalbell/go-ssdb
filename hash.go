@@ -2,6 +2,9 @@ package ssdb
 
 import (
 	"context"
+	"errors"
+
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 func encodeHashKey(key []byte, field []byte) []byte {
@@ -28,8 +31,11 @@ func (db *DB) HGet(ctx context.Context, key []byte, field []byte) ([]byte, error
 
 func (db *DB) HLen(ctx context.Context, key []byte) (uint64, error) {
 	value, err := db.ldb.Get(encodeHashSizeKey(key), nil)
-	if err != nil {
+	if errors.Is(err, leveldb.ErrNotFound) {
 		return 0, nil
+	}
+	if err != nil {
+		return 0, err
 	}
 	return db.byteOrder.Uint64(value), nil
 }
