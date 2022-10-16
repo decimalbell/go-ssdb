@@ -7,6 +7,9 @@ test:
 	go test ./...
 	git restore testdata
 
+bench:
+	go test -bench=.
+
 cover:
 	go test -coverprofile=coverage.out
 	git restore testdata

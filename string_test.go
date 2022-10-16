@@ -3,6 +3,7 @@ package ssdb
 import (
 	"context"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -112,5 +113,30 @@ func TestIncrby(t *testing.T) {
 		val, err := db.Get(ctx, key)
 		assert.Nil(t, err)
 		assert.EqualValues(t, []byte("10"), val)
+	}
+}
+
+func BenchmarkSet(b *testing.B) {
+	dir, _ := os.MkdirTemp("", "ssdb")
+	defer os.RemoveAll(dir)
+
+	db, _ := Open(dir, nil)
+	defer db.Close()
+
+	keys := make([][]byte, 0, b.N)
+	values := make([][]byte, 0, b.N)
+
+	for i := 0; i < b.N; i++ {
+		keys = append(keys, []byte(strconv.Itoa(i)))
+		values = append(values, []byte(strconv.Itoa(i*2)))
+	}
+
+	ctx := context.TODO()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		err := db.Set(ctx, keys[i], values[i])
+		if err != nil {
+			b.Errorf("Set: %v", err)
+		}
 	}
 }
