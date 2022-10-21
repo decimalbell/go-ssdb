@@ -1,10 +1,10 @@
 all: build test
 
 build:
-	go build
+	go build -race
 
 test:
-	go test ./...
+	go test -race ./...
 	git restore testdata
 
 bench:
