@@ -28,3 +28,7 @@ func (db *DB) Incrby(ctx context.Context, key []byte, increment int64) (int64, e
 	defer db.mu.Unlock()
 	return db.incrbyLocked(encodeStringKey(key), increment)
 }
+
+func (db *DB) Incr(ctx context.Context, key []byte) (int64, error) {
+	return db.Incrby(ctx, key, 1)
+}
