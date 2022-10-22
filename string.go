@@ -24,5 +24,7 @@ func (db *DB) Del(ctx context.Context, key []byte) error {
 }
 
 func (db *DB) Incrby(ctx context.Context, key []byte, increment int64) (int64, error) {
-	return db.incrby(encodeStringKey(key), increment)
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	return db.incrbyLocked(encodeStringKey(key), increment)
 }

@@ -4,11 +4,13 @@ import (
 	"encoding/binary"
 	"errors"
 	"strconv"
+	"sync"
 
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
 type DB struct {
+	mu        sync.Mutex
 	ldb       *leveldb.DB
 	byteOrder binary.ByteOrder
 }
@@ -46,7 +48,7 @@ func (db *DB) get(ldbKey []byte) ([]byte, error) {
 	return value, nil
 }
 
-func (db *DB) incrby(ldbKey []byte, increment int64) (int64, error) {
+func (db *DB) incrbyLocked(ldbKey []byte, increment int64) (int64, error) {
 	val, err := db.get(ldbKey)
 	if err != nil {
 		return 0, err

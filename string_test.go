@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -114,6 +115,35 @@ func TestIncrby(t *testing.T) {
 		assert.Nil(t, err)
 		assert.EqualValues(t, []byte("10"), val)
 	}
+}
+
+func TestIncrbyParallel(t *testing.T) {
+	dir, _ := os.MkdirTemp("", "ssdb")
+	defer os.RemoveAll(dir)
+
+	db, _ := Open(dir, nil)
+	defer db.Close()
+
+	ctx := context.TODO()
+	key := []byte("key")
+	count := 100
+
+	var wg sync.WaitGroup
+	for i := 0; i < count; i++ {
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+
+			_, err := db.Incrby(ctx, key, 1)
+			assert.Nil(t, err)
+		}(i)
+	}
+	wg.Wait()
+
+	value, err := db.Get(ctx, key)
+	assert.Nil(t, err)
+	assert.EqualValues(t, []byte(strconv.Itoa(count)), value)
 }
 
 func BenchmarkSet(b *testing.B) {
