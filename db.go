@@ -97,7 +97,7 @@ func (db *DB) incrbyTxn(ctx context.Context, txn *Txn,
 		newVal += increment
 	}
 
-	txn.Put(ctx, ldbKey, []byte(strconv.FormatInt(newVal, 10)), Sync, eventCmd)
+	txn.PutWithEvent(ctx, ldbKey, []byte(strconv.FormatInt(newVal, 10)), Sync, eventCmd)
 
 	return newVal, nil
 }

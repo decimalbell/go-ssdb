@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -79,6 +80,67 @@ func TestHSet(t *testing.T) {
 		len, err := db.HLen(ctx, key)
 		assert.Nil(t, err)
 		assert.EqualValues(t, 100, len)
+	}
+}
+
+func TestHSetParallel(t *testing.T) {
+	dir, _ := os.MkdirTemp("", "ssdb")
+	defer os.RemoveAll(dir)
+
+	db, _ := Open(dir, nil)
+	defer db.Close()
+
+	ctx := context.TODO()
+	key := []byte("key")
+	count := 100
+	fields := make([][]byte, 0, count)
+	values := make([][]byte, 0, count)
+
+	for i := 0; i < 100; i++ {
+		field := []byte(strconv.Itoa(i))
+		value := []byte(strconv.Itoa(i))
+
+		fields = append(fields, field)
+		values = append(values, value)
+	}
+
+	{
+		var wg sync.WaitGroup
+		for i := 0; i < count; i++ {
+			wg.Add(1)
+
+			go func(i int) {
+				defer wg.Done()
+
+				err := db.HSet(ctx, key, fields[i], values[i])
+				assert.Nil(t, err)
+			}(i)
+		}
+		wg.Wait()
+
+		len, err := db.HLen(ctx, key)
+		assert.Nil(t, err)
+		assert.EqualValues(t, count, len)
+	}
+
+	{
+		var wg sync.WaitGroup
+		for i := 0; i < count; i++ {
+			wg.Add(1)
+
+			go func(i int) {
+				defer wg.Done()
+
+				ok, err := db.HDel(ctx, key, fields[i])
+				assert.Nil(t, err)
+				assert.Equal(t, true, ok)
+			}(i)
+		}
+		wg.Wait()
+
+		len, err := db.HLen(ctx, key)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 0, len)
 	}
 }
 

@@ -13,7 +13,7 @@ func encodeStringKey(key []byte) []byte {
 
 func (db *DB) Set(ctx context.Context, key []byte, value []byte) error {
 	err := db.WithTxn(func(txn *Txn) error {
-		txn.Put(ctx, encodeStringKey(key), value, Copy, StringSet)
+		txn.PutWithEvent(ctx, encodeStringKey(key), value, Copy, StringSet)
 
 		return nil
 	})
@@ -27,7 +27,7 @@ func (db *DB) Get(ctx context.Context, key []byte) ([]byte, error) {
 
 func (db *DB) Del(ctx context.Context, key []byte) error {
 	err := db.WithTxn(func(txn *Txn) error {
-		txn.Delete(ctx, encodeStringKey(key), Copy, StringDel)
+		txn.DeleteWithEvent(ctx, encodeStringKey(key), Copy, StringDel)
 
 		return nil
 	})

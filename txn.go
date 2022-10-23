@@ -36,7 +36,11 @@ func (txn *Txn) Get(ctx context.Context, ldbKey []byte) ([]byte, error) {
 	return txn.db.get(ldbKey)
 }
 
-func (txn *Txn) Put(ctx context.Context, ldbKey []byte, value []byte,
+func (txn *Txn) Put(ctx context.Context, ldbKey []byte, value []byte) {
+	txn.batch.Put(ldbKey, value)
+}
+
+func (txn *Txn) PutWithEvent(ctx context.Context, ldbKey []byte, value []byte,
 	eventType EventType, eventCmd EventCommand) {
 
 	txn.seq++
@@ -51,7 +55,11 @@ func (txn *Txn) Put(ctx context.Context, ldbKey []byte, value []byte,
 	txn.batch.Put(encodeEventKey(event.Seq), event.MarshalBinary())
 }
 
-func (txn *Txn) Delete(ctx context.Context, ldbKey []byte,
+func (txn *Txn) Delete(ctx context.Context, ldbKey []byte) {
+	txn.batch.Delete(ldbKey)
+}
+
+func (txn *Txn) DeleteWithEvent(ctx context.Context, ldbKey []byte,
 	eventType EventType, eventCmd EventCommand) {
 
 	txn.seq++

@@ -35,53 +35,55 @@ func encodeHashLenKey(key []byte) []byte {
 	return buf
 }
 
-func (db *DB) HSet(ctx context.Context, key []byte, field []byte, value []byte) error {
+func (db *DB) HSet(ctx context.Context, key []byte, field []byte, value []byte) (err error) {
 	ldbKey := encodeHashKey(key, field)
-	exists, err := db.exists(ldbKey)
-	if err != nil {
-		return err
-	}
+	return db.WithTxn(func(txn *Txn) error {
+		exists, err := db.exists(ldbKey)
+		if err != nil {
+			return err
+		}
 
-	if err := db.ldb.Put(ldbKey, value, nil); err != nil {
-		return err
-	}
+		txn.PutWithEvent(ctx, ldbKey, value, Sync, HashSet)
+		if !exists {
+			return db.incrbyHLenTxn(ctx, txn, encodeHashLenKey(key), 1)
+		}
 
-	if !exists {
-		return db.incrbyHLen(encodeHashLenKey(key), 1)
-	}
-
-	return nil
+		return nil
+	})
 }
 
-func (db *DB) HSetNX(ctx context.Context, key []byte, field []byte, value []byte) (bool, error) {
+func (db *DB) HSetNX(ctx context.Context, key []byte, field []byte, value []byte) (ok bool, err error) {
 	ldbKey := encodeHashKey(key, field)
-	exists, err := db.exists(ldbKey)
-	if err != nil {
-		return false, err
-	}
-	if exists {
-		return false, nil
-	}
+	err = db.WithTxn(func(txn *Txn) error {
+		exists, err := db.exists(ldbKey)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return nil
+		}
 
-	if err := db.ldb.Put(ldbKey, value, nil); err != nil {
-		return false, err
-	}
+		txn.PutWithEvent(ctx, ldbKey, value, Sync, HashSet)
+		if err := db.incrbyHLenTxn(ctx, txn, encodeHashLenKey(key), 1); err != nil {
+			return err
+		}
 
-	if err := db.incrbyHLen(encodeHashLenKey(key), 1); err != nil {
-		return false, err
-	}
+		ok = true
+		return nil
+	})
 
-	return true, nil
+	return ok, err
 }
 
-func (db *DB) incrbyHLen(ldbKey []byte, increment int64) error {
+func (db *DB) incrbyHLenTxn(ctx context.Context, txn *Txn, ldbKey []byte, increment int64) error {
 	len, err := db.hlen(ldbKey)
 	if err != nil {
 		return err
 	}
 	value := make([]byte, 8)
 	db.byteOrder.PutUint64(value, uint64(len+increment))
-	return db.ldb.Put(ldbKey, value, nil)
+	txn.Put(ctx, ldbKey, value)
+	return nil
 }
 
 func (db *DB) HGet(ctx context.Context, key []byte, field []byte) ([]byte, error) {
@@ -106,26 +108,28 @@ func (db *DB) hlen(ldbKey []byte) (int64, error) {
 	return int64(db.byteOrder.Uint64(value)), nil
 }
 
-func (db *DB) HDel(ctx context.Context, key []byte, field []byte) (bool, error) {
+func (db *DB) HDel(ctx context.Context, key []byte, field []byte) (ok bool, err error) {
 	ldbKey := encodeHashKey(key, field)
-	exists, err := db.exists(ldbKey)
-	if err != nil {
-		return false, err
-	}
-	if !exists {
-		return false, nil
-	}
+	err = db.WithTxn(func(txn *Txn) error {
+		exists, err := db.exists(ldbKey)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return nil
+		}
 
-	if err := db.ldb.Delete(ldbKey, nil); err != nil {
-		return false, err
-	}
+		txn.DeleteWithEvent(ctx, ldbKey, Sync, HashDel)
+		err = db.incrbyHLenTxn(ctx, txn, encodeHashLenKey(key), -1)
+		if err != nil {
+			return err
+		}
 
-	err = db.incrbyHLen(encodeHashLenKey(key), -1)
-	if err != nil {
-		return false, err
-	}
+		ok = true
+		return nil
+	})
 
-	return true, nil
+	return ok, err
 }
 
 func (db *DB) HKeys(ctx context.Context, key []byte) ([][]byte, error) {
