@@ -1,4 +1,4 @@
-package ssdb
+package tests
 
 import (
 	"context"
