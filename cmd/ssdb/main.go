@@ -15,10 +15,20 @@ func main() {
 				Name:  "server",
 				Usage: "server",
 				Action: func(cCtx *cli.Context) error {
+					path, _ := os.MkdirTemp("", "ssdb")
+					defer os.RemoveAll(path)
+
 					opts := &ssdb.Options{
+						Path: path,
 						Addr: ":7979",
 					}
-					s := ssdb.NewServer(opts)
+
+					s, err := ssdb.NewServer(opts)
+					if err != nil {
+						log.Fatal(err)
+					}
+					defer s.Close()
+
 					log.Fatal(s.ListenAndServe())
 
 					return nil
