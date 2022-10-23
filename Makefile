@@ -2,6 +2,7 @@ all: build test
 
 build:
 	go build -race
+	go build -o bin/ssdb ./cmd/ssdb
 
 test:
 	go test -race ./...
