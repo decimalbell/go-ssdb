@@ -42,6 +42,28 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestSet(t *testing.T) {
+	dir, _ := os.MkdirTemp("", "ssdb")
+	defer os.RemoveAll(dir)
+
+	db, _ := Open(dir, nil)
+	defer db.Close()
+
+	ctx := context.TODO()
+	key := []byte("key")
+	value := []byte("value")
+
+	err := db.Set(ctx, key, value)
+	assert.Nil(t, err)
+	assert.EqualValues(t, 1, db.binlog.Seq())
+
+	seq := db.binlog.Seq()
+	event, err := db.binlog.Get(ctx, seq)
+	assert.Nil(t, err)
+	assert.Equal(t, StringSet, event.Cmd)
+	assert.EqualValues(t, encodeStringKey(key), event.Key)
+}
+
 func TestDel(t *testing.T) {
 	dir, _ := os.MkdirTemp("", "ssdb")
 	defer os.RemoveAll(dir)
@@ -74,6 +96,43 @@ func TestDel(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Nil(t, val)
 	}
+}
+
+func TestDelBinlog(t *testing.T) {
+	dir, _ := os.MkdirTemp("", "ssdb")
+	defer os.RemoveAll(dir)
+
+	db, _ := Open(dir, nil)
+	defer db.Close()
+
+	ctx := context.TODO()
+	key := []byte("key")
+	value := []byte("value")
+
+	{
+		err := db.Set(ctx, key, value)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 1, db.binlog.Seq())
+
+		seq := db.binlog.Seq()
+		event, err := db.binlog.Get(ctx, seq)
+		assert.Nil(t, err)
+		assert.Equal(t, StringSet, event.Cmd)
+		assert.EqualValues(t, encodeStringKey(key), event.Key)
+	}
+
+	{
+		err := db.Del(ctx, key)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 2, db.binlog.Seq())
+
+		seq := db.binlog.Seq()
+		event, err := db.binlog.Get(ctx, seq)
+		assert.Nil(t, err)
+		assert.Equal(t, StringDel, event.Cmd)
+		assert.EqualValues(t, encodeStringKey(key), event.Key)
+	}
+
 }
 
 func TestIncrby(t *testing.T) {

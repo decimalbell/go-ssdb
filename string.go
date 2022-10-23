@@ -12,7 +12,13 @@ func encodeStringKey(key []byte) []byte {
 }
 
 func (db *DB) Set(ctx context.Context, key []byte, value []byte) error {
-	return db.ldb.Put(encodeStringKey(key), value, nil)
+	err := db.WithTxn(func(txn *Txn) error {
+		txn.Put(ctx, encodeStringKey(key), value, Copy, StringSet)
+
+		return nil
+	})
+
+	return err
 }
 
 func (db *DB) Get(ctx context.Context, key []byte) ([]byte, error) {
@@ -20,13 +26,17 @@ func (db *DB) Get(ctx context.Context, key []byte) ([]byte, error) {
 }
 
 func (db *DB) Del(ctx context.Context, key []byte) error {
-	return db.ldb.Delete(encodeStringKey(key), nil)
+	err := db.WithTxn(func(txn *Txn) error {
+		txn.Delete(ctx, encodeStringKey(key), Copy, StringDel)
+
+		return nil
+	})
+
+	return err
 }
 
 func (db *DB) Incrby(ctx context.Context, key []byte, increment int64) (int64, error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-	return db.incrbyLocked(encodeStringKey(key), increment)
+	return db.incrby(ctx, encodeStringKey(key), increment, StringSet)
 }
 
 func (db *DB) Incr(ctx context.Context, key []byte) (int64, error) {
