@@ -7,24 +7,29 @@ import (
 	"github.com/tidwall/redcon"
 )
 
+type Config struct {
+	Path string
+	Addr string
+}
+
 type Server struct {
-	opts *Options
+	config *Config
 
 	db *DB
 
 	mux *redcon.ServeMux
 }
 
-func NewServer(opts *Options) (*Server, error) {
-	db, err := Open(opts.Path, opts)
+func NewServer(config *Config) (*Server, error) {
+	db, err := Open(config.Path, &Options{})
 	if err != nil {
 		return nil, err
 	}
 
 	s := &Server{
-		opts: opts,
-		db:   db,
-		mux:  redcon.NewServeMux(),
+		config: config,
+		db:     db,
+		mux:    redcon.NewServeMux(),
 	}
 
 	s.mux.HandleFunc("ping", s.Ping)
@@ -42,7 +47,7 @@ func (s *Server) Close() error {
 }
 
 func (s *Server) ListenAndServe() error {
-	return redcon.ListenAndServe(s.opts.Addr,
+	return redcon.ListenAndServe(s.config.Addr,
 		s.mux.ServeRESP,
 		func(conn redcon.Conn) bool {
 			return true

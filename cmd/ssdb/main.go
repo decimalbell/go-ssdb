@@ -18,12 +18,12 @@ func main() {
 					path, _ := os.MkdirTemp("", "ssdb")
 					defer os.RemoveAll(path)
 
-					opts := &ssdb.Options{
+					config := &ssdb.Config{
 						Path: path,
 						Addr: ":7979",
 					}
 
-					s, err := ssdb.NewServer(opts)
+					s, err := ssdb.NewServer(config)
 					if err != nil {
 						log.Fatal(err)
 					}
