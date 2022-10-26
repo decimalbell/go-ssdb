@@ -30,7 +30,7 @@ gen_zset () {
         key=zset$i
         for j in {0..9}; do
             member=member$j
-            redis-cli -h localhost -p 8888 zadd $key $member $j
+            redis-cli -h localhost -p 8888 zadd $key $j $member
         done
     done
 }
