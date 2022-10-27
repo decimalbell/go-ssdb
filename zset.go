@@ -1,11 +1,13 @@
 package ssdb
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"strconv"
 
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 func encodeZSetMemberKey(key []byte, member []byte) []byte {
@@ -18,11 +20,37 @@ func encodeZSetMemberKey(key []byte, member []byte) []byte {
 	return buf
 }
 
+func encodeZSetMemberPrefixKey(key []byte) []byte {
+	buf := make([]byte, 0, 1+1+len(key))
+	buf = append(buf, 's')
+	buf = append(buf, byte(len(key)))
+	buf = append(buf, key...)
+	return buf
+}
+
 func encodeZSetLenKey(key []byte) []byte {
 	buf := make([]byte, 0, 1+len(key))
 	buf = append(buf, 'Z')
 	buf = append(buf, key...)
 	return buf
+}
+
+func (db *DB) ZRank(ctx context.Context, key []byte, member []byte) (uint64, error) {
+	var rank uint64
+	prefix := encodeZSetMemberPrefixKey(key)
+	target := encodeZSetMemberKey(key, member)
+	iter := db.ldb.NewIterator(util.BytesPrefix(prefix), nil)
+	for iter.Next() {
+		if bytes.Equal(iter.Key(), target) {
+			break
+		}
+		rank++
+	}
+	iter.Release()
+	if err := iter.Error(); err != nil {
+		return 0, err
+	}
+	return rank, nil
 }
 
 func (db *DB) ZScore(ctx context.Context, key []byte, member []byte) (float64, error) {
