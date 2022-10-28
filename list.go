@@ -30,25 +30,60 @@ func encodeListLenKey(key []byte) []byte {
 }
 
 func (db *DB) LIndex(ctx context.Context, key []byte, index int64) ([]byte, error) {
-	var (
-		seq int64
-		err error
-	)
-	if index >= 0 {
-		seq, err = db.lget(encodeListKey(key, frontSeq))
-		if err != nil {
-			return nil, err
-		}
-		seq += index
-	} else {
-		seq, err = db.lget(encodeListKey(key, backSeq))
-		if err != nil {
-			return nil, err
-		}
-		seq += index + 1
+	seq, err := db.lseq(key, index)
+	if err != nil {
+		return nil, err
 	}
 
 	return db.get(encodeListKey(key, uint64(seq)))
+}
+
+func (db *DB) LRange(ctx context.Context, key []byte, start int64, stop int64) ([][]byte, error) {
+	startSeq, err := db.lseq(key, start)
+	if err != nil {
+		return nil, err
+	}
+
+	stopSeq, err := db.lseq(key, stop)
+	if err != nil {
+		return nil, err
+	}
+
+	if startSeq > stopSeq {
+		return nil, nil
+	}
+
+	elements := make([][]byte, 0, stopSeq-startSeq)
+	for seq := startSeq; seq <= stopSeq; seq++ {
+		element, err := db.get(encodeListKey(key, seq))
+		if err != nil {
+			return nil, err
+		}
+		if element == nil {
+			break
+		}
+		elements = append(elements, element)
+	}
+
+	return elements, nil
+}
+
+func (db *DB) lseq(key []byte, index int64) (uint64, error) {
+	if index >= 0 {
+		seq, err := db.lget(encodeListKey(key, frontSeq))
+		if err != nil {
+			return 0, err
+		}
+		seq += index
+		return uint64(seq), nil
+	} else {
+		seq, err := db.lget(encodeListKey(key, backSeq))
+		if err != nil {
+			return 0, err
+		}
+		seq += index + 1
+		return uint64(seq), nil
+	}
 }
 
 func (db *DB) LLen(ctx context.Context, key []byte) (int64, error) {

@@ -31,7 +31,7 @@ func TestLIndex(t *testing.T) {
 
 	ctx := context.TODO()
 
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 100; i++ {
 		key := []byte(fmt.Sprintf("list%d", i))
 		for j := 0; j < 10; j++ {
 			element := []byte(fmt.Sprintf("element%d", 9-j))
@@ -60,5 +60,20 @@ func TestLIndex(t *testing.T) {
 			assert.Nil(t, err)
 			assert.EqualValues(t, element, val)
 		}
+	}
+}
+
+func TestLRange(t *testing.T) {
+	db, err := ssdb.Open(dir, nil)
+	assert.Nil(t, err)
+	defer db.Close()
+
+	ctx := context.TODO()
+
+	for i := 0; i < 100; i++ {
+		key := []byte(fmt.Sprintf("list%d", i))
+		val, err := db.LRange(ctx, key, 0, -1)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 20, len(val))
 	}
 }
