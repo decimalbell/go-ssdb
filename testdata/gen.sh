@@ -40,9 +40,9 @@ gen_list () {
     for i in {0..99}; do
         key=list$i
         for j in {0..9}; do
-            member=member$j
-            redis-cli -h localhost -p 8888 qpush_front $key $member
-            redis-cli -h localhost -p 8888 qpush_back $key $member
+            element=element$j
+            redis-cli -h localhost -p 8888 qpush_front $key $element
+            redis-cli -h localhost -p 8888 qpush_back $key $element
         done
     done
 }
