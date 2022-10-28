@@ -18,7 +18,7 @@ func TestHGet(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		key := []byte(fmt.Sprintf("hash%d", i))
-		for j := 0; j < 1; j++ {
+		for j := 0; j < 10; j++ {
 			field := []byte(fmt.Sprintf("field%d", j))
 			value := []byte(fmt.Sprintf("value%d", j))
 			val, err := db.HGet(ctx, key, field)
