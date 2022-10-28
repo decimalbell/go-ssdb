@@ -4,6 +4,7 @@ gen () {
     gen_string
     gen_hash
     gen_zset
+    gen_list
 }
 
 gen_string () {
@@ -31,6 +32,17 @@ gen_zset () {
         for j in {0..9}; do
             member=member$j
             redis-cli -h localhost -p 8888 zadd $key $j $member
+        done
+    done
+}
+
+gen_list () {
+    for i in {0..99}; do
+        key=list$i
+        for j in {0..9}; do
+            member=member$j
+            redis-cli -h localhost -p 8888 qpush_front $key $member
+            redis-cli -h localhost -p 8888 qpush_back $key $member
         done
     done
 }
